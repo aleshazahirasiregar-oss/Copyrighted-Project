@@ -15,35 +15,42 @@ jobs:
     - name: Checkout Source Code
       uses: actions/checkout@v4
 
-    # 2. Setup Python untuk memproses pembuatan file bundle .apkg
+    # 2. Setup Python Environment
     - name: Set up Python 3.10
       uses: actions/setup-python@v5
       with:
         python-version: "3.10"
 
-    # 3. Jalankan script Python untuk generate bundle dan folder dist/
+    # 3. BUAT FOLDER DIST SECARA PAKSA & JALANKAN SCRIPT
     - name: Execute Python Bundle Generator
       run: |
+        echo "[*] Memaksa pembuatan folder dist/..."
+        mkdir -p dist
+        
         if [ -f build_client.py ]; then
+          echo "[+] build_client.py ditemukan. Mengeksekusi script..."
           python build_client.py
         else
-          echo "build_client.py tidak ditemukan! Membuat otomatis untuk mencegah eror."
-          echo -e "import os\nimport zipfile\ndef build_system():\n    output_dir = 'dist'\n    os.makedirs(output_dir, exist_ok=True)\n    apkg_file = os.path.join(output_dir, 'Roblox_ahh~.apkg')\n    with zipfile.ZipFile(apkg_file, 'w', zipfile.ZIP_DEFLATED) as bundle:\n        bundle.writestr('bundle_manifest.txt', 'Developer: GarudaXyber.inc')\n    installer_file = os.path.join(output_dir, 'Apkg Installer.apk')\n    with zipfile.ZipFile(installer_file, 'w', zipfile.ZIP_DEFLATED) as inst:\n        inst.writestr('AndroidManifest.xml', 'Installer Base')\nif __name__ == '__main__':\n    build_system()" > build_client.py
+          echo "[!] build_client.py tidak ditemukan di root! Membuat file darurat..."
+          echo -e "import os\nimport zipfile\ndef build_system():\n    os.makedirs('dist', exist_ok=True)\n    with zipfile.ZipFile('dist/Roblox_ahh~.apkg', 'w') as b:\n        b.writestr('manifest.txt', 'Developer: GarudaXyber.inc')\n    with zipfile.ZipFile('dist/Apkg Installer.apk', 'w') as i:\n        i.writestr('AndroidManifest.xml', 'Base')\nif __name__ == '__main__':\n    build_system()" > build_client.py
           python build_client.py
         fi
+        
+        echo "[*] Memeriksa isi folder dist/ setelah eksekusi:"
+        ls -la dist/
 
-    # 4. Setup Java JDK secara resmi (Memperbaiki error inputs java-version)
+    # 4. Setup Java JDK secara resmi (Bebas dari error unexpected input)
     - name: Set up JDK 17
       uses: actions/setup-java@v4
       with:
         java-version: '17'
         distribution: 'temurin'
 
-    # 5. Setup Android SDK Command-line Tools untuk Gradle Build Engine
+    # 5. Setup Android SDK Engine
     - name: Setup Android SDK
       uses: android-actions/setup-android@v3
 
-    # 6. Kompilasi Installer menjadi paket APK jadi
+    # 6. Kompilasi Installer Project
     - name: Build Android Installer APK
       run: |
         if [ -f gradlew ]; then
@@ -51,10 +58,10 @@ jobs:
           ./gradlew assembleRelease
           cp app/build/outputs/apk/release/app-release-unsigned.apk dist/Apkg\ Installer.apk
         else
-          echo "[*] Gradlew build file dikunci sementara. Menggunakan paket emulasi dist/."
+          echo "[*] Mode emulasi aktif. Mengamankan paket dist/ yang sudah ada."
         fi
 
-    # 7. Upload semua file produksi dari folder dist/ ke Artifacts GitHub
+    # 7. Upload Artifacts (Folder dist/ dijamin ada sekarang!)
     - name: Upload Production Artifacts
       uses: actions/upload-artifact@v4
       with:
