@@ -1,40 +1,37 @@
 import os
-import zipfile
 
-def initiate_build():
-    print("==================================================")
-    print("   GARUDAXYBER.INC - AUTOMATED BUILD SYSTEM       ")
-    print("   Project: Roblox_ahh~.apkg                      ")
-    print("==================================================")
+def create_installer_structure():
+    # Membuat struktur folder Android project
+    structure = [
+        "app/src/main/java/com/garudaxyber/installer",
+        "app/src/main/res/layout",
+        "dist"
+    ]
     
-    # 1. Membuat direktori output 'dist' jika belum ada
-    output_dir = "dist"
-    if not os.path.exists(output_dir):
-        os.makedirs(output_dir)
-        print(f"[*] Membuat folder output: {output_dir}/")
-        
-    output_file = os.path.join(output_dir, "Roblox_ahh~.apkg")
+    for path in structure:
+        os.makedirs(path, exist_ok=True)
     
-    # 2. Proses bundling dummy/core files ke dalam format .apkg (ZIP-based bundle)
-    print("[*] Memulai proses kompilasi komponen package...")
-    try:
-        with zipfile.ZipFile(output_file, 'w', zipfile.ZIP_DEFLATED) as apkg_bundle:
-            # Membuat manifest sederhana di dalam bundle
-            manifest_content = (
-                "Package-Name: Roblox_ahh~\n"
-                "Extension: .apkg\n"
-                "Developer: GarudaXyber.inc\n"
-                "Security-Status: No-Parental-Control / Optimized\n"
-            )
-            apkg_bundle.writestr("bundle_manifest.txt", manifest_content)
-            print("[+] bundle_manifest.txt berhasil ditanamkan.")
-            
-        print("==================================================")
-        print(f"[SUCCESS] File berhasil di-build: {output_file}")
-        print("==================================================")
-    except Exception as e:
-        print(f"[ERROR] Proses build gagal: {str(e)}")
+    print("[*] Struktur source code Apkg Installer berhasil dibuat.")
+    
+    # Menulis AndroidManifest.xml (Wajib ada untuk Installer)
+    manifest = """<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.garudaxyber.installer">
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+    <application android:label="Apkg Installer">
+        <activity android:name=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="application/octet-stream" />
+            </intent-filter>
+        </activity>
+    </application>
+</manifest>"""
+    
+    with open("app/src/main/AndroidManifest.xml", "w") as f:
+        f.write(manifest)
+    print("[+] AndroidManifest.xml generated.")
 
 if __name__ == "__main__":
-    initiate_build()
-  
+    create_installer_structure()
+    
